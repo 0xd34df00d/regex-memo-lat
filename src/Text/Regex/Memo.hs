@@ -16,21 +16,7 @@ import Data.List (sortBy)
 import Data.Word
 import Data.Ord
 
-data Rx
-  = RCh Char
-  | REps
-  | RConcat Rx Rx
-  | RAlt Rx Rx
-  | RStar Rx
-  deriving (Eq, Show)
-
-prettyRx :: Rx -> String
-prettyRx = \case
-  RCh ch -> [ch]
-  REps -> "ε"
-  RConcat r1 r2 -> prettyRx r1 <> prettyRx r2
-  RAlt r1 r2 -> "(" <> prettyRx r1 <> ")|(" <> prettyRx r2 <> ")"
-  RStar r -> "(" <> prettyRx r <> ")*"
+import Text.Regex.Memo.Rx
 
 data Trans q
   = TEps q
@@ -66,7 +52,7 @@ convert :: Rx -> NFA 'Unique Word32
 convert rxTop = evalState (go rxTop) 0
   where
   go rx = do
-    (q0, q1) <- allocStates
+    (q0, q1) <- allocPair
     case rx of
       RCh ch -> pure $ NFA [(q0, TCh ch q1)] q0 q1
       REps -> pure $ NFA [(q0, TEps q1)] q0 q1
@@ -82,7 +68,7 @@ convert rxTop = evalState (go rxTop) 0
         NFA t q0' q1' <- go r
         pure $ NFA (t <> [(q0, TBranch q0' q1), (q1', TEps q0)]) q0 q1
 
-  allocStates = do
-    q0 <- get
+  allocPair = do
+    q <- get
     modify' (+ 2)
-    pure (q0, q0 + 1)
+    pure (q, q + 1)
