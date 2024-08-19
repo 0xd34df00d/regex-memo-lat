@@ -15,8 +15,8 @@ data Rx
 
 prettyRx :: Rx -> String
 prettyRx = \case
-  RCh ch -> [ch]
+  RCh ch -> [' ', ch, ' ']
   REps -> "ε"
   RConcat r1 r2 -> prettyRx r1 <> prettyRx r2
-  RAlt r1 r2 -> "(" <> prettyRx r1 <> ")|(" <> prettyRx r2 <> ")"
+  RAlt r1 r2 -> "(" <> prettyRx r1 <> "|" <> prettyRx r2 <> ")"
   RStar r -> "(" <> prettyRx r <> ")*"
