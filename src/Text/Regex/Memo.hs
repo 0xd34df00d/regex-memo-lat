@@ -1,16 +1,20 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Text.Regex.Memo where
 
 import Control.Monad.State.Strict
-import Data.Kind
-import Data.Word
 import Data.HashMap.Strict qualified as HM
+import Data.Kind
+import Data.List (sortBy)
+import Data.Word
+import Data.Ord
 
 data Rx
   = RCh Char
@@ -34,6 +38,12 @@ data Trans q
   | TCh Char q
   deriving (Eq, Show)
 
+prettyTrans :: Show q => Trans q -> String
+prettyTrans = \case
+  TEps q -> "(ε) " <> show q
+  TBranch q1 q2 -> show q1 <> " | " <> show q2
+  TCh c q -> ['\'', c, '\'', ' '] <> show q
+
 data FinStateKind = Unique | Many
 
 type family FinStateMod (k :: FinStateKind) (q :: Type) :: Type where
@@ -45,6 +55,12 @@ data NFA fsk q = NFA
   , initState :: q
   , finState :: FinStateMod fsk q
   }
+
+prettyNFA :: (Ord q, Show q, Show (FinStateMod fsk q)) => NFA fsk q -> String
+prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
+  [ show q <> " ~> " <> prettyTrans trans
+  | (q, trans) <- sortBy (comparing fst) $ HM.toList transitions
+  ]
 
 convert :: Rx -> NFA 'Unique Word32
 convert rxTop = evalState (go rxTop) 0
