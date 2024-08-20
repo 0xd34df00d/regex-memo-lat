@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
@@ -9,9 +10,15 @@ module Text.Regex.Memo.NFA
 ( NFA(..)
 , Trans(..)
 , FinStateKind(..)
+
+, StateId
+, TransMap
+, getTrans
+
 , prettyNFA
 ) where
 
+import Data.Hashable
 import Data.HashMap.Strict qualified as HM
 import Data.List (sortBy)
 import Data.Kind
@@ -29,6 +36,18 @@ prettyTrans = \case
   TBranch q1 q2 -> show q1 <> " | " <> show q2
   TCh c q -> ['\'', c, '\'', ' '] <> show q
 
+
+type StateId q = (Eq q, Hashable q)
+
+
+type TransMap q = HM.HashMap q (Trans q)
+
+getTrans :: StateId q => q -> TransMap q -> Trans q
+getTrans q m = case q `HM.lookup` m of
+                 Just r -> r
+                 Nothing -> error "invariant failure"
+
+
 data FinStateKind = Unique | Many
 
 type family FinStateMod (k :: FinStateKind) (q :: Type) :: Type where
@@ -36,7 +55,7 @@ type family FinStateMod (k :: FinStateKind) (q :: Type) :: Type where
   FinStateMod 'Many q = [q]
 
 data NFA fsk q = NFA
-  { transitions :: HM.HashMap q (Trans q)
+  { transitions :: TransMap q
   , initState :: q
   , finState :: FinStateMod fsk q
   }
