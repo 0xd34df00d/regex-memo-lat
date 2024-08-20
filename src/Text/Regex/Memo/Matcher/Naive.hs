@@ -22,8 +22,8 @@ instance Applicative MatchResult where
   pure = SuccessAt
 
 instance Alternative MatchResult where
-  SuccessAt a <|> _ = SuccessAt a
-  _           <|> r = r
+  SuccessAt a <|> ~_ = SuccessAt a
+  _           <|> ~r = r
   empty = Failure
 
 match :: StateId q => NFA 'Unique q -> BS.ByteString -> MatchResult Int
