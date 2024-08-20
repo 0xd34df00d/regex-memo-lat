@@ -9,14 +9,18 @@ import Test.Hspec
 import Text.Regex.Memo
 import Text.Regex.Memo.Parser
 import Text.Regex.Memo.Matcher.MatchResult
-import Text.Regex.Memo.Matcher.Naive
+import Text.Regex.Memo.Matcher.Naive qualified as N
+import Text.Regex.Memo.Matcher.Memoizing qualified as M
 
 main :: IO ()
 main = hspec $ do
   describe "Rx parser" $
     it "parses a basic regex" $
       parseRx "a(b|c)d(e|f)*z" `shouldSatisfy` isRight
-  describe "Smoke tests (naive)" $ do
+  describe "Smoke tests (naive)" $ smokes N.match
+  describe "Smoke tests (memo)" $ smokes M.match
+  where
+  smokes match = do
     it "matches what it should" $ do
       Right rx <- pure $ parseRx "a(b|c)d(e|f)*z"
       let extra = "we don't care about the rest"
