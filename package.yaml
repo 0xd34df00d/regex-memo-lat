@@ -54,3 +54,4 @@ tests:
     dependencies:
     - regex-memo-lat
     - hspec
+    - QuickCheck

@@ -1,10 +1,12 @@
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad
-import Data.ByteString qualified as BS
+import Data.ByteString.Char8 qualified as BS
 import Data.Either
 import Test.Hspec
+import Test.QuickCheck hiding (Failure)
 
 import Text.Regex.Memo
 import Text.Regex.Memo.Parser
@@ -19,6 +21,11 @@ main = hspec $ do
       parseRx "a(b|c)d(e|f)*z" `shouldSatisfy` isRight
   describe "Smoke tests (naive)" $ smokes N.match
   describe "Smoke tests (memo)" $ smokes M.match
+  describe "Naive and memo agree" $ do
+    it "on arbitrary input" $ do
+      let Right rx = parseRx "a(b|c)d(e|f)*z"
+      let nfa = convert rx
+      property $ \str -> let bs = BS.pack $ getASCIIString str in M.match nfa bs == N.match nfa bs
   where
   smokes match = do
     it "matches what it should" $ do
