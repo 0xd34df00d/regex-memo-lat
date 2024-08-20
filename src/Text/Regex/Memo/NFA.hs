@@ -65,4 +65,3 @@ prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> s
   [ show q <> " ~> " <> prettyTrans trans
   | (q, trans) <- sortBy (comparing fst) $ HM.toList transitions
   ]
-
