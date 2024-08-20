@@ -4,6 +4,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Text.Regex.Memo.NFA
