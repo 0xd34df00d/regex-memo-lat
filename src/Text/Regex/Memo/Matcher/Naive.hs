@@ -4,7 +4,10 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
 
-module Text.Regex.Memo.Matcher.Naive(match) where
+module Text.Regex.Memo.Matcher.Naive
+( MatchResult(..)
+, match
+) where
 
 import Control.Applicative
 import Data.ByteString.Char8 qualified as BS
