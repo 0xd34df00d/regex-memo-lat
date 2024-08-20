@@ -1,6 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+import Control.Monad
 import Data.ByteString qualified as BS
 import Data.Either
 import Test.Hspec
@@ -17,6 +18,11 @@ main = hspec $ do
   describe "Smoke tests (naive)" $ do
     it "matches what it should" $ do
       Right rx <- pure $ parseRx "a(b|c)d(e|f)*z"
-      let nfa = convert rx
-      let str = "abdeffefefez"
-      match nfa str `shouldBe` SuccessAt (BS.length str)
+      let extra = "we don't care about the rest"
+      forM_ ["abdz", "acdz", "abdeffefefez"] $ \str ->  do
+        match (convert rx) str            `shouldBe` SuccessAt (BS.length str)
+        match (convert rx) (str <> extra) `shouldBe` SuccessAt (BS.length str)
+    it "doesn't match what it shouldn't" $ do
+      Right rx <- pure $ parseRx "a(b|c)d(e|f)*z"
+      let str = "abdeffefefe"
+      match (convert rx) str `shouldBe` Failure
