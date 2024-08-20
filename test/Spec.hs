@@ -8,6 +8,7 @@ import Test.Hspec
 
 import Text.Regex.Memo
 import Text.Regex.Memo.Parser
+import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.Matcher.Naive
 
 main :: IO ()

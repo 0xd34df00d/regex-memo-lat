@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
@@ -12,19 +11,8 @@ module Text.Regex.Memo.Matcher.Naive
 import Control.Applicative
 import Data.ByteString.Char8 qualified as BS
 
+import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.NFA
-
-data MatchResult a = SuccessAt a | Failure deriving (Eq, Ord, Show, Functor)
-
-instance Applicative MatchResult where
-  SuccessAt f <*> SuccessAt v = SuccessAt $ f v
-  _           <*> _           = Failure
-  pure = SuccessAt
-
-instance Alternative MatchResult where
-  SuccessAt a <|> ~_ = SuccessAt a
-  _           <|> ~r = r
-  empty = Failure
 
 match :: StateId q => NFA 'Unique q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = go initState 0
