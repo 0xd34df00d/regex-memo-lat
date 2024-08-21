@@ -17,8 +17,9 @@ import Text.Regex.Memo.Matcher.Memoizing qualified as M
 main :: IO ()
 main = hspec $ do
   describe "Rx parser" $
-    it "parses a basic regex" $
+    it "parses a basic regex" $ do
       parseRx "a(b|c)d(e|f)*z" `shouldSatisfy` isRight
+      parseRx "(aa|ab)*z" `shouldSatisfy` isRight
   describe "Smoke tests (naive)" $ smokes N.match
   describe "Smoke tests (memo)" $ smokes M.match
   describe "Naive and memo agree" $ do

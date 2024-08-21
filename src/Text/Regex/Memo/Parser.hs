@@ -22,7 +22,7 @@ topLevel = alternated
 alternated :: Parseable s => Parsec Void s Rx
 alternated = do
   rx1 <- concatenated
-  mrx2 <- optional $ char '|' *> repeated
+  mrx2 <- optional $ char '|' *> concatenated
   case mrx2 of
     Nothing -> pure rx1
     Just rx2 -> pure $ RAlt rx1 rx2
