@@ -28,14 +28,18 @@ main = hspec $ do
       let nfa = convert rx
       property $ \str -> let bs = BS.pack $ getASCIIString str in M.match nfa bs == N.match nfa bs
   where
-  smokes match = do
-    it "matches what it should" $ do
-      Right rx <- pure $ parseRx "a(b|c)d(e|f)*z"
+  smokes match = forM_ rxs $ \(rx, positive, negative) -> do
+    it (rx <> " matches what it should") $ do
+      Right nfa <- pure $ convert <$> parseRx rx
       let extra = "we don't care about the rest"
-      forM_ ["abdz", "acdz", "abdeffefefez"] $ \str ->  do
-        match (convert rx) str            `shouldBe` SuccessAt (BS.length str)
-        match (convert rx) (str <> extra) `shouldBe` SuccessAt (BS.length str)
-    it "doesn't match what it shouldn't" $ do
-      Right rx <- pure $ parseRx "a(b|c)d(e|f)*z"
-      let str = "abdeffefefe"
-      match (convert rx) str `shouldBe` Failure
+      forM_ positive $ \str ->  do
+        match nfa str            `shouldBe` SuccessAt (BS.length str)
+        match nfa (str <> extra) `shouldBe` SuccessAt (BS.length str)
+    it (rx <> " doesn't match what it shouldn't") $ do
+      Right nfa <- pure $ convert <$> parseRx rx
+      forM_ negative $ \str ->
+        match nfa str `shouldBe` Failure
+    where
+    rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
+          , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
+          ]
