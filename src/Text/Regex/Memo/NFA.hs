@@ -6,6 +6,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Text.Regex.Memo.NFA
 ( NFA(..)
@@ -19,11 +20,12 @@ module Text.Regex.Memo.NFA
 , prettyNFA
 ) where
 
+import Data.EnumMap.Strict qualified as EM
 import Data.Hashable
-import Data.HashMap.Strict qualified as HM
 import Data.List (sortBy)
 import Data.Kind
 import Data.Ord
+import GHC.IsList
 
 data Trans q
   = TEps q
@@ -38,13 +40,13 @@ prettyTrans = \case
   TCh c q -> ['\'', c, '\'', ' '] <> show q
 
 
-type StateId q = (Eq q, Hashable q)
+type StateId q = (Eq q, Hashable q, Enum q)
 
 
-type TransMap q = HM.HashMap q (Trans q)
+type TransMap q = EM.EnumMap q (Trans q)
 
 getTrans :: StateId q => q -> TransMap q -> Trans q
-getTrans q m = case q `HM.lookup` m of
+getTrans q m = case q `EM.lookup` m of
                  Just r -> r
                  Nothing -> error "invariant failure"
 
@@ -61,8 +63,13 @@ data NFA fsk q = NFA
   , finState :: FinStateMod fsk q
   }
 
-prettyNFA :: (Ord q, Show q, Show (FinStateMod fsk q)) => NFA fsk q -> String
+instance Enum k => IsList (EM.EnumMap k v) where
+  type Item (EM.EnumMap k v) = (k, v)
+  fromList = EM.fromList
+  toList = EM.toList
+
+prettyNFA :: (StateId q, Ord q, Show q, Show (FinStateMod fsk q)) => NFA fsk q -> String
 prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
   [ show q <> " ~> " <> prettyTrans trans
-  | (q, trans) <- sortBy (comparing fst) $ HM.toList transitions
+  | (q, trans) <- sortBy (comparing fst) $ toList transitions
   ]

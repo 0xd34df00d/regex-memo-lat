@@ -24,6 +24,7 @@ dependencies:
 - bytestring
 - containers
 - deepseq
+- enummapset
 - hashable
 - megaparsec
 - mtl
