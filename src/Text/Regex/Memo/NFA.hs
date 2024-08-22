@@ -11,6 +11,7 @@
 module Text.Regex.Memo.NFA
 ( NFA(..)
 , Trans(..)
+, transTargets
 , FinStateKind(..)
 
 , StateId
@@ -32,6 +33,12 @@ data Trans q
   | TBranch q q
   | TCh Char q
   deriving (Eq, Show)
+
+transTargets :: Trans q -> [q]
+transTargets = \case
+  TEps q -> [q]
+  TBranch q1 q2 -> [q1, q2]
+  TCh _ q -> [q]
 
 prettyTrans :: Show q => Trans q -> String
 prettyTrans = \case
