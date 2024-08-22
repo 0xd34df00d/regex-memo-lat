@@ -40,6 +40,8 @@ ghc-options:
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
+- -fexpose-all-unfoldings
+- -fspecialize-aggressively
 
 library:
   source-dirs: src
