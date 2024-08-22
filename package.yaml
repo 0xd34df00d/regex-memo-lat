@@ -44,6 +44,18 @@ ghc-options:
 library:
   source-dirs: src
 
+benchmarks:
+  regex-memo-lat-bench:
+    main:                Bench.hs
+    source-dirs:         bench
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - regex-memo-lat
+    - criterion
+
 tests:
   regex-memo-lat-test:
     main:                Spec.hs
