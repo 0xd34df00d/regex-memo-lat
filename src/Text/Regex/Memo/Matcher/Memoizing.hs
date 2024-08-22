@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
@@ -7,7 +8,8 @@ module Text.Regex.Memo.Matcher.Memoizing
 ( match
 ) where
 
-import Control.Applicative hiding (empty)
+import Control.Monad
+import Control.Monad.State.Strict
 import Data.ByteString.Char8 qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
@@ -19,22 +21,39 @@ import Text.Regex.Memo.NFA
 newtype MemoTable q = MemoTable (EM.EnumMap Int (ES.EnumSet q))
 
 match :: StateId q => NFA 'Unique q -> BS.ByteString -> MatchResult Int
-match NFA{..} bs = go (empty (length transitions) (BS.length bs)) initState 0
+match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.length bs))
   where
-  go memo q i
-    | (q, i) `member` memo = Failure
-    | q == finState = SuccessAt i
-    | i >= BS.length bs = Failure
-  go memo q i = case q `getTrans` transitions of
-                  TEps q' -> go memo q' i
-                  TBranch q1 q2 -> go memo q1 i <|> go (insert (q1, i) memo) q2 i
+  indegs = ES.fromList $ EM.keys $ EM.filter (>= 2) $ EM.fromListWith (+)
+            [ (q, 1 :: Int)
+            | ts <- EM.elems transitions
+            , q <- transTargets ts
+            ]
+  worthMemoing = (`ES.member` indegs)
+
+  go q i
+    | q == finState = pure $ SuccessAt i
+    | i >= BS.length bs = pure Failure
+  go q i = do
+    memo <- get
+    if (q, i) `member` memo
+       then pure Failure
+       else do
+         res <- case q `getTrans` transitions of
+                  TEps q' -> go q' i
+                  TBranch q1 q2 -> do
+                    r1 <- go q1 i
+                    case r1 of
+                      SuccessAt j -> pure $ SuccessAt j
+                      Failure -> go q2 i
                   TCh ch q'
-                   | bs `BS.index` i == ch -> go memo q' (i + 1)
-                   | otherwise -> Failure
+                   | bs `BS.index` i == ch -> go q' (i + 1)
+                   | otherwise -> pure Failure
+         when (res == Failure && worthMemoing q) $ modify' $ insert (q, i)
+         pure res
 
 
 empty :: Int -> Int -> MemoTable q
-empty _stateCount _strLen = MemoTable mempty
+empty _stateCount _len = MemoTable mempty
 
 member :: StateId q => (q, Int) -> MemoTable q -> Bool
 member (q, i) (MemoTable tbl) = case i `EM.lookup` tbl of
