@@ -1,11 +1,10 @@
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE Strict #-}
 
-module Text.Regex.Memo where
+module Text.Regex.Memo(convert) where
 
 import Control.Monad
 import Control.Monad.State.Strict
