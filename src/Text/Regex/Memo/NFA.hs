@@ -22,6 +22,7 @@ module Text.Regex.Memo.NFA
 ) where
 
 import Data.EnumMap.Strict qualified as EM
+import Data.EnumSet qualified as ES
 import Data.Hashable
 import Data.List (sortBy)
 import Data.Kind
@@ -68,6 +69,7 @@ data NFA fsk q = NFA
   { transitions :: TransMap q
   , initState :: q
   , finState :: FinStateMod fsk q
+  , highIndegs :: ES.EnumSet q
   }
 
 instance Enum k => IsList (EM.EnumMap k v) where

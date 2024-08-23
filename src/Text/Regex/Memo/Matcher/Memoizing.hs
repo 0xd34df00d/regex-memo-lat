@@ -4,9 +4,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
 
-module Text.Regex.Memo.Matcher.Memoizing
-( match
-) where
+module Text.Regex.Memo.Matcher.Memoizing(match) where
 
 import Control.Monad
 import Control.Monad.State.Strict
@@ -23,16 +21,11 @@ newtype MemoTable q = MemoTable (EM.EnumMap Int (ES.EnumSet q))
 match :: StateId q => NFA 'Unique q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.length bs))
   where
-  indegs = ES.fromList $ EM.keys $ EM.filter (>= 2) $ EM.fromListWith (+)
-            [ (q, 1 :: Int)
-            | ts <- EM.elems transitions
-            , q <- transTargets ts
-            ]
-  worthMemoing = (`ES.member` indegs)
+  len = BS.length bs
 
   go q i
     | q == finState = pure $ SuccessAt i
-    | i >= BS.length bs = pure Failure
+    | i >= len = pure Failure
   go q i = do
     memo <- get
     if (q, i) `member` memo
@@ -48,7 +41,7 @@ match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.le
                   TCh ch q'
                    | bs `BS.index` i == ch -> go q' (i + 1)
                    | otherwise -> pure Failure
-         when (res == Failure && worthMemoing q) $ modify' $ insert (q, i)
+         when (res == Failure && q `ES.member` highIndegs) $ modify' $ insert (q, i)
          pure res
 
 
