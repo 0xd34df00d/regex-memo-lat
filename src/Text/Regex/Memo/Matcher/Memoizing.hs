@@ -18,7 +18,7 @@ import Text.Regex.Memo.NFA
 
 newtype MemoTable q = MemoTable (EM.EnumMap Int (ES.EnumSet q))
 
-match :: StateId q => NFA 'Unique q -> BS.ByteString -> MatchResult Int
+match :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.length bs))
   where
   len = BS.length bs

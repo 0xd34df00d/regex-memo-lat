@@ -12,7 +12,7 @@ module Text.Regex.Memo.NFA
 ( NFA(..)
 , Trans(..)
 , transTargets
-, FinStateKind(..)
+, NFAStage(..)
 
 , StateId
 , TransMap
@@ -58,18 +58,17 @@ getTrans q m = case q `EM.lookup` m of
                  Just r -> r
                  Nothing -> error "invariant failure"
 
+data NFAStage = NFABuilding | NFAComplete
 
-data FinStateKind = Unique | Many
+type family IndegsType (s :: NFAStage) (q :: Type) :: Type where
+  IndegsType 'NFABuilding _ = ()
+  IndegsType 'NFAComplete q = ES.EnumSet q
 
-type family FinStateMod (k :: FinStateKind) (q :: Type) :: Type where
-  FinStateMod 'Unique q = q
-  FinStateMod 'Many q = [q]
-
-data NFA fsk q = NFA
+data NFA stage q = NFA
   { transitions :: TransMap q
   , initState :: q
-  , finState :: FinStateMod fsk q
-  , highIndegs :: ES.EnumSet q
+  , finState :: q
+  , highIndegs :: IndegsType stage q
   }
 
 instance Enum k => IsList (EM.EnumMap k v) where
@@ -77,7 +76,7 @@ instance Enum k => IsList (EM.EnumMap k v) where
   fromList = EM.fromList
   toList = EM.toList
 
-prettyNFA :: (StateId q, Ord q, Show q, Show (FinStateMod fsk q)) => NFA fsk q -> String
+prettyNFA :: (StateId q, Ord q, Show q) => NFA stage q -> String
 prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
   [ show q <> " ~> " <> prettyTrans trans
   | (q, trans) <- sortBy (comparing fst) $ toList transitions
