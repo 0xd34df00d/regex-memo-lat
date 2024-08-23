@@ -4,6 +4,7 @@
 
 module Text.Regex.Memo where
 
+import Control.Monad
 import Control.Monad.State.Strict
 import Data.Word
 
@@ -19,6 +20,7 @@ convert rxTop = evalState (go rxTop) 0
       RCh ch -> pure $ NFA [(q0, TCh ch q1)] q0 q1
       REps -> pure $ NFA [(q0, TEps q1)] q0 q1
       RConcat r1 r2 -> do
+        releasePair q0 q1
         NFA t1 r1q0 r1q1 <- go r1
         NFA t2 r2q0 r2q1 <- go r2
         pure $ NFA (t1 <> t2 <> [(r1q1, TEps r2q0)]) r1q0 r2q1
@@ -34,3 +36,6 @@ convert rxTop = evalState (go rxTop) 0
     q <- get
     modify' (+ 2)
     pure (q, q + 1)
+  releasePair q0 q1 = do
+    q <- get
+    when (q == q1 + 1 && q == q0 + 2) $ modify' (subtract 2)
