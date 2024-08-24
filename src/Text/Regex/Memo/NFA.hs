@@ -21,6 +21,8 @@ module Text.Regex.Memo.NFA
 , prettyNFA
 ) where
 
+import Data.Array qualified as A
+import Data.Array.Base qualified as A
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Hashable
@@ -48,15 +50,10 @@ prettyTrans = \case
   TCh c q -> ['\'', c, '\'', ' '] <> show q
 
 
-type StateId q = (Eq q, Hashable q, Enum q)
+type StateId q = (Hashable q, Integral q, A.Ix q)
 
 
 type TransMap q = EM.EnumMap q (Trans q)
-
-getTrans :: StateId q => q -> TransMap q -> Trans q
-getTrans q m = case q `EM.lookup` m of
-                 Just r -> r
-                 Nothing -> error "invariant failure"
 
 data NFAStage = NFABuilding | NFAComplete
 
@@ -64,8 +61,16 @@ type family IndegsType (s :: NFAStage) (q :: Type) :: Type where
   IndegsType 'NFABuilding _ = ()
   IndegsType 'NFAComplete q = ES.EnumSet q
 
+type family TransType (s :: NFAStage) (q :: Type) :: Type where
+  TransType 'NFABuilding q = TransMap q
+  TransType 'NFAComplete q = A.Array q (Trans q)
+
+getTrans :: StateId q => q -> TransType 'NFAComplete q -> Trans q
+getTrans q m = m `A.unsafeAt` fromIntegral q
+{-# INLINE getTrans #-}
+
 data NFA stage q = NFA
-  { transitions :: TransMap q
+  { transitions :: TransType stage q
   , initState :: q
   , finState :: q
   , highIndegs :: IndegsType stage q
@@ -76,7 +81,7 @@ instance Enum k => IsList (EM.EnumMap k v) where
   fromList = EM.fromList
   toList = EM.toList
 
-prettyNFA :: (StateId q, Ord q, Show q) => NFA stage q -> String
+prettyNFA :: (StateId q, Show q) => NFA 'NFABuilding q -> String
 prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
   [ show q <> " ~> " <> prettyTrans trans
   | (q, trans) <- sortBy (comparing fst) $ toList transitions

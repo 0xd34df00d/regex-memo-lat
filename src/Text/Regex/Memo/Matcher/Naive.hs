@@ -14,7 +14,7 @@ import Data.ByteString.Char8 qualified as BS
 import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.NFA
 
-match :: StateId q => NFA stage q -> BS.ByteString -> MatchResult Int
+match :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = go initState 0
   where
   len = BS.length bs

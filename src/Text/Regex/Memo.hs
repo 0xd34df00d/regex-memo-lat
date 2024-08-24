@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
@@ -8,8 +9,10 @@ module Text.Regex.Memo(convert) where
 
 import Control.Monad
 import Control.Monad.State.Strict
+import Data.Array qualified as A
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
+import Data.Foldable
 import Data.Word
 
 import Text.Regex.Memo.Rx
@@ -45,11 +48,12 @@ convert rxTop = computeHighIndegs $ evalState (go rxTop) 0
     when (q == q1 + 1 && q == q0 + 2) $ modify' (subtract 2)
 
   computeHighIndegs :: StateId q => NFA 'NFABuilding q -> NFA 'NFAComplete q
-  computeHighIndegs nfa = nfa{ highIndegs }
+  computeHighIndegs nfa = nfa{ highIndegs, transitions = transitions' }
     where
+    transitions' = A.listArray (0, fromIntegral (length $ transitions nfa) - 1) $ fmap snd $ EM.toAscList $ transitions nfa
     highIndegs =
       ES.fromList $ EM.keys $ EM.filter (>= 2) $ EM.fromListWith (+)
         [ (q, 1 :: Int)
-        | ts <- EM.elems $ transitions nfa
+        | ts <- toList transitions'
         , q <- transTargets ts
         ]
