@@ -10,6 +10,7 @@ module Text.Regex.Memo.Matcher.Naive
 
 import Control.Applicative
 import Data.ByteString.Char8 qualified as BS
+import Data.ByteString.Unsafe qualified as BS
 
 import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.NFA
@@ -25,5 +26,5 @@ match NFA{..} bs = go initState 0
              TEps q' -> go q' i
              TBranch q1 q2 -> go q1 i <|> go q2 i
              TCh ch q'
-               | bs `BS.index` i == ch -> go q' (i + 1)
+               | bs `BS.unsafeIndex` i == ch -> go q' (i + 1)
                | otherwise -> Failure

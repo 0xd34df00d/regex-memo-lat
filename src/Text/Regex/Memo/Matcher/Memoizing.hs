@@ -9,6 +9,7 @@ module Text.Regex.Memo.Matcher.Memoizing(match) where
 import Control.Monad
 import Control.Monad.State.Strict
 import Data.ByteString.Char8 qualified as BS
+import Data.ByteString.Unsafe qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Maybe
@@ -39,7 +40,7 @@ match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.le
                       SuccessAt j -> pure $ SuccessAt j
                       Failure -> go q2 i
                   TCh ch q'
-                   | bs `BS.index` i == ch -> go q' (i + 1)
+                   | bs `BS.unsafeIndex` i == ch -> go q' (i + 1)
                    | otherwise -> pure Failure
          when (res == Failure && q `ES.member` highIndegs) $ modify' $ insert (q, i)
          pure res

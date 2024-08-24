@@ -10,6 +10,7 @@ module Text.Regex.Memo(convert) where
 import Control.Monad
 import Control.Monad.State.Strict
 import Data.Array qualified as A
+import Data.ByteString.Internal qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Foldable
@@ -24,7 +25,7 @@ convert rxTop = computeHighIndegs $ evalState (go rxTop) 0
   go rx = do
     (q0, q1) <- allocPair
     case rx of
-      RCh ch -> pure $ NFA [(q0, TCh ch q1)] q0 q1 ()
+      RCh ch -> pure $ NFA [(q0, TCh (BS.c2w ch) q1)] q0 q1 ()
       REps -> pure $ NFA [(q0, TEps q1)] q0 q1 ()
       RConcat r1 r2 -> do
         releasePair q0 q1

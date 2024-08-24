@@ -23,18 +23,20 @@ module Text.Regex.Memo.NFA
 
 import Data.Array qualified as A
 import Data.Array.Base qualified as A
+import Data.ByteString.Internal qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Hashable
 import Data.List (sortBy)
 import Data.Kind
 import Data.Ord
+import Data.Word
 import GHC.IsList
 
 data Trans q
   = TEps q
   | TBranch q q
-  | TCh Char q
+  | TCh Word8 q
   deriving (Eq, Show)
 
 transTargets :: Trans q -> [q]
@@ -47,7 +49,7 @@ prettyTrans :: Show q => Trans q -> String
 prettyTrans = \case
   TEps q -> "(ε) " <> show q
   TBranch q1 q2 -> show q1 <> " | " <> show q2
-  TCh c q -> ['\'', c, '\'', ' '] <> show q
+  TCh c q -> ['\'', BS.w2c c, '\'', ' '] <> show q
 
 
 type StateId q = (Hashable q, Integral q, A.Ix q)
