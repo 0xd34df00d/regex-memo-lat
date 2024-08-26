@@ -5,8 +5,7 @@
 import Data.ByteString.Char8 qualified as BS
 import Criterion.Main
 
-import Text.Regex.Memo
-import Text.Regex.Memo.Parser
+import Text.Regex.Memo hiding (match)
 import Text.Regex.Memo.Matcher.Naive qualified as N
 import Text.Regex.Memo.Matcher.Memoizing qualified as M
 

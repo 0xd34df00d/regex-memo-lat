@@ -8,9 +8,7 @@ import Data.Either
 import Test.Hspec
 import Test.QuickCheck hiding (Failure)
 
-import Text.Regex.Memo
-import Text.Regex.Memo.Parser
-import Text.Regex.Memo.Matcher.MatchResult
+import Text.Regex.Memo hiding (match)
 import Text.Regex.Memo.Matcher.Naive qualified as N
 import Text.Regex.Memo.Matcher.Memoizing qualified as M
 
