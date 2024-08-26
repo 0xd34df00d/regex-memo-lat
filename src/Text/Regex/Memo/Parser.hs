@@ -17,7 +17,7 @@ import Text.Regex.Memo.Rx
 type Parseable s = (Stream s, Token s ~ Char)
 
 parseRx :: String -> Either String (Rx 'Parsed)
-parseRx str = first errorBundlePretty $ parse topLevel "" str
+parseRx str = first errorBundlePretty $ parse (topLevel <* eof) "" str
 
 topLevel :: Parseable s => Parsec Void s (Rx 'Parsed)
 topLevel = alternated
