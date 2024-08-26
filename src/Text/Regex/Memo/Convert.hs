@@ -19,9 +19,10 @@ import Data.Word
 import Text.Regex.Memo.Rx
 import Text.Regex.Memo.NFA
 
-convert :: Rx -> NFA 'NFAComplete Word32
-convert rxTop = computeHighIndegs $ evalState (go rxTop) 0
+convert :: Rx 'Parsed -> NFA 'NFAComplete Word32
+convert rxTop = computeHighIndegs $ evalState (go $ desugar rxTop) 0
   where
+  go :: Rx 'Desugared -> State Word32 (NFA 'NFABuilding Word32)
   go rx = do
     (q0, q1) <- allocPair
     case rx of

@@ -1,4 +1,5 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Text.Regex.Memo.Parser(parseRx) where
@@ -13,13 +14,13 @@ import Text.Regex.Memo.Rx
 
 type Parseable s = (Stream s, Token s ~ Char)
 
-parseRx :: String -> Either String Rx
+parseRx :: String -> Either String (Rx 'Parsed)
 parseRx str = first errorBundlePretty $ parse topLevel "" str
 
-topLevel :: Parseable s => Parsec Void s Rx
+topLevel :: Parseable s => Parsec Void s (Rx 'Parsed)
 topLevel = alternated
 
-alternated :: Parseable s => Parsec Void s Rx
+alternated :: Parseable s => Parsec Void s (Rx 'Parsed)
 alternated = do
   rx1 <- concatenated
   mrx2 <- optional $ char '|' *> concatenated
@@ -27,13 +28,13 @@ alternated = do
     Nothing -> pure rx1
     Just rx2 -> pure $ RAlt rx1 rx2
 
-concatenated :: Parseable s => Parsec Void s Rx
+concatenated :: Parseable s => Parsec Void s (Rx 'Parsed)
 concatenated = do
-  rxs <- some repeated
+  rxs <- some postModified
   pure $ foldl1 RConcat rxs
 
-repeated :: Parseable s => Parsec Void s Rx
-repeated = do
+postModified :: Parseable s => Parsec Void s (Rx 'Parsed)
+postModified = do
   rx <- parens topLevel <|> simpleChar <|> escapedChar
   star <- optional $ char '*'
   case star of
