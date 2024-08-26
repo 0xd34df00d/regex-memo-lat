@@ -34,13 +34,15 @@ concatenated = do
 
 repeated :: Parseable s => Parsec Void s Rx
 repeated = do
-  rx <- parens topLevel <|> simpleChar
+  rx <- parens topLevel <|> simpleChar <|> escapedChar
   star <- optional $ char '*'
   case star of
     Nothing -> pure rx
     Just _ -> pure $ RStar rx
   where
-  simpleChar = RCh <$> noneOf "()*|"
+  simpleChar = RCh <$> noneOf specialChars
+  escapedChar = RCh <$> (char '\\' *> oneOf specialChars)
+  specialChars = "()*|\\"
 
 parens :: Parseable s => Parsec Void s a -> Parsec Void s a
 parens = between (char '(') (char ')')
