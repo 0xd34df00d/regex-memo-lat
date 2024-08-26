@@ -1,11 +1,13 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Text.Regex.Memo.Parser(parseRx) where
 
 import Control.Applicative.Combinators.NonEmpty
 import Data.Bifunctor
+import Data.Functor (($>), (<&>))
 import Data.Void
 import Text.Megaparsec hiding (some)
 import Text.Megaparsec.Char
@@ -36,16 +38,23 @@ concatenated = do
 postModified :: Parseable s => Parsec Void s (Rx 'Parsed)
 postModified = do
   rx <- parens topLevel <|> simpleChar <|> escapedChar
-  star <- optional $ char '*' <|> char '?'
-  case star of
-    Nothing -> pure rx
-    Just '*' -> pure $ RStar rx
-    Just '?' -> pure $ ROptional rx
-    Just _ -> fail "unexpected char"
+  optional modifier <&> \case
+    Nothing -> rx
+    Just MStar -> RStar rx
+    Just MOpt -> ROptional rx
   where
   simpleChar = RCh <$> noneOf specialChars
   escapedChar = RCh <$> (char '\\' *> oneOf specialChars)
   specialChars = "()*|\\?"
+
+
+data Modifier
+  = MStar
+  | MOpt
+
+modifier :: Parseable s => Parsec Void s Modifier
+modifier = char '*' $> MStar
+       <|> char '?' $> MOpt
 
 parens :: Parseable s => Parsec Void s a -> Parsec Void s a
 parens = between (char '(') (char ')')
