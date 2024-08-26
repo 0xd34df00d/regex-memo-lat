@@ -18,6 +18,7 @@ main = hspec $ do
     it "parses a basic regex" $ do
       parseRx "a(b|c)d(e|f)*z" `shouldSatisfy` isRight
       parseRx "(aa|ab)*z" `shouldSatisfy` isRight
+      parseRx "(aa|ab)?z" `shouldSatisfy` isRight
   describe "Smoke tests (naive)" $ smokes N.match
   describe "Smoke tests (memo)" $ smokes M.match
   describe "Naive and memo agree" $ do
@@ -40,4 +41,5 @@ main = hspec $ do
     where
     rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
           , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
+          , ("(aa|ab)?z", ["aaz", "z", "abz"], ["az", "aaabz"])
           ]

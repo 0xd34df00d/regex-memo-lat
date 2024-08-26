@@ -36,14 +36,16 @@ concatenated = do
 postModified :: Parseable s => Parsec Void s (Rx 'Parsed)
 postModified = do
   rx <- parens topLevel <|> simpleChar <|> escapedChar
-  star <- optional $ char '*'
+  star <- optional $ char '*' <|> char '?'
   case star of
     Nothing -> pure rx
-    Just _ -> pure $ RStar rx
+    Just '*' -> pure $ RStar rx
+    Just '?' -> pure $ ROptional rx
+    Just _ -> fail "unexpected char"
   where
   simpleChar = RCh <$> noneOf specialChars
   escapedChar = RCh <$> (char '\\' *> oneOf specialChars)
-  specialChars = "()*|\\"
+  specialChars = "()*|\\?"
 
 parens :: Parseable s => Parsec Void s a -> Parsec Void s a
 parens = between (char '(') (char ')')

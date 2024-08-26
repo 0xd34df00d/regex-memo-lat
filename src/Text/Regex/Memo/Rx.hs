@@ -21,6 +21,7 @@ data Rx :: RxKind -> Type where
   RConcat :: Rx k -> Rx k -> Rx k
   RAlt :: Rx k -> Rx k -> Rx k
   RStar :: Rx k -> Rx k
+  ROptional :: Rx 'Parsed -> Rx 'Parsed
 
 deriving instance Eq (Rx k)
 deriving instance Show (Rx k)
@@ -32,6 +33,7 @@ prettyRx = \case
   RConcat r1 r2 -> prettyRx r1 <> prettyRx r2
   RAlt r1 r2 -> "(" <> prettyRx r1 <> "|" <> prettyRx r2 <> ")"
   RStar r -> "(" <> prettyRx r <> ")*"
+  ROptional r -> "(" <> prettyRx r <> ")?"
 
 desugar :: Rx 'Parsed -> Rx 'Desugared
 desugar = \case
@@ -40,3 +42,4 @@ desugar = \case
   RConcat r1 r2 -> RConcat (desugar r1) (desugar r2)
   RAlt r1 r2 -> RAlt (desugar r1) (desugar r2)
   RStar r -> RStar (desugar r)
+  ROptional r -> RAlt (desugar r) REps
