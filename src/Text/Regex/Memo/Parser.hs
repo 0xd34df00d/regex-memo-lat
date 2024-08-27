@@ -5,7 +5,7 @@
 
 module Text.Regex.Memo.Parser(parseRx) where
 
-import Control.Applicative.Combinators.NonEmpty
+import Control.Monad.Combinators.NonEmpty
 import Data.Bifunctor
 import Data.Functor (($>), (<&>))
 import Data.Void
