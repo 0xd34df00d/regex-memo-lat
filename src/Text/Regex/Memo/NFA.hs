@@ -18,10 +18,11 @@ module Text.Regex.Memo.NFA
 , TransMap
 , getTrans
 
-, prettyNFA
+, prettyNFABuilding
+, prettyNFAComplete
 ) where
 
-import Data.Array qualified as A
+import Data.Array qualified as A (Array, Ix)
 import Data.Array.Base qualified as A
 import Data.ByteString.Internal qualified as BS
 import Data.EnumMap.Strict qualified as EM
@@ -83,8 +84,14 @@ instance Enum k => IsList (EM.EnumMap k v) where
   fromList = EM.fromList
   toList = EM.toList
 
-prettyNFA :: (StateId q, Show q) => NFA 'NFABuilding q -> String
-prettyNFA NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
+prettyNFABuilding :: (StateId q, Show q) => NFA 'NFABuilding q -> String
+prettyNFABuilding NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
   [ show q <> " ~> " <> prettyTrans trans
   | (q, trans) <- sortBy (comparing fst) $ toList transitions
+  ]
+
+prettyNFAComplete :: (StateId q, Show q) => NFA 'NFAComplete q -> String
+prettyNFAComplete NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
+  [ show q <> " ~> " <> prettyTrans trans
+  | (q, trans) <- zip [0 :: Int ..] $ A.elems transitions
   ]
