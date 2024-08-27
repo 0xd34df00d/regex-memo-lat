@@ -25,6 +25,7 @@ data Rx :: RxKind -> Type where
   RAlt :: Rx k -> Rx k -> Rx k
   RStar :: Rx k -> Rx k
   ROptional :: Rx 'Parsed -> Rx 'Parsed
+  RReps :: Rx 'Parsed -> Int -> Int -> Rx 'Parsed
 
 deriving instance Eq (Rx k)
 deriving instance Show (Rx k)
@@ -37,6 +38,7 @@ prettyRx = \case
   RAlt r1 r2 -> "(" <> prettyRx r1 <> "|" <> prettyRx r2 <> ")"
   RStar r -> "(" <> prettyRx r <> ")*"
   ROptional r -> "(" <> prettyRx r <> ")?"
+  RReps r from to -> "(" <> prettyRx r <> "){" <> show from <> "," <> show to <> "}"
 
 concatMany :: Foldable f => f (Rx k) -> Rx k
 concatMany xs
@@ -51,3 +53,5 @@ desugar = \case
   RAlt r1 r2 -> RAlt (desugar r1) (desugar r2)
   RStar r -> RStar (desugar r)
   ROptional r -> RAlt (desugar r) REps
+  RReps r from to -> RConcat (concatMany $ replicate from $ desugar r)
+                             (concatMany $ replicate (to - from) $ desugar $ ROptional r)

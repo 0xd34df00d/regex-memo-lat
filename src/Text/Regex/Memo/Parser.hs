@@ -7,10 +7,12 @@ module Text.Regex.Memo.Parser(parseRx) where
 
 import Control.Monad.Combinators.NonEmpty
 import Data.Bifunctor
-import Data.Functor (($>), (<&>))
+import Data.Functor (($>), (<&>), void)
+import Data.Maybe
 import Data.Void
 import Text.Megaparsec hiding (some)
 import Text.Megaparsec.Char
+import Text.Megaparsec.Char.Lexer
 
 import Text.Regex.Memo.Rx
 
@@ -40,6 +42,7 @@ postModified = do
     Nothing -> rx
     Just MStar -> RStar rx
     Just MOpt -> ROptional rx
+    Just (MReps from to) -> RReps rx from to
   where
   simpleChar = RCh <$> noneOf specialChars
   escapedChar = RCh <$> (char '\\' *> oneOf specialChars)
@@ -49,10 +52,19 @@ postModified = do
 data Modifier
   = MStar
   | MOpt
+  | MReps Int Int
 
 modifier :: Parseable s => Parsec Void s Modifier
 modifier = char '*' $> MStar
        <|> char '?' $> MOpt
+       <|> char '{' *> reps
+  where
+  reps :: Parseable s => Parsec Void s Modifier
+  reps = do
+    from <- decimal
+    mto <- optional $ char ',' *> decimal
+    void $ char '}'
+    pure $ MReps from (fromMaybe from mto)
 
 parens :: Parseable s => Parsec Void s a -> Parsec Void s a
 parens = between (char '(') (char ')')
