@@ -15,12 +15,9 @@ import Text.Regex.Memo.Matcher.Memoizing qualified as M
 main :: IO ()
 main = hspec $ do
   describe "Rx parser" $
-    it "parses a basic regex" $ do
-      parseRx "a(b|c)d(e|f)*z" `shouldSatisfy` isRight
-      parseRx "(aa|ab)*z" `shouldSatisfy` isRight
-      parseRx "(aa|ab)?z" `shouldSatisfy` isRight
-      parseRx "(aa|ab){3}z" `shouldSatisfy` isRight
-      parseRx "(aa|ab){3,5}z" `shouldSatisfy` isRight
+    forM_ rxs $ \(rx, _, _) ->
+      it ("parses a regex: "<> rx) $ do
+        parseRx rx `shouldSatisfy` isRight
   describe "Smoke tests (naive)" $ smokes N.match
   describe "Smoke tests (memo)" $ smokes M.match
   describe "Naive and memo agree" $ do
@@ -40,10 +37,10 @@ main = hspec $ do
       Right nfa <- pure $ convert <$> parseRx rx
       forM_ negative $ \str ->
         match nfa str `shouldBe` Failure
-    where
-    rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
-          , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
-          , ("(aa|ab)?z", ["aaz", "z", "abz"], ["az", "aaabz"])
-          , ("(aa|ab){3}z", ["aaabaaz", "aaaaaaz", "abababz"], ["aaz", "aaabz", "aaaaaaaaz"])
-          , ("(aa|ab){3,5}z", ["aaabaaz", "aaaaaaz", "abababz", "aaaaaaaaz", "aaabaaaaz", "aaabaaabaaz"], ["aaz", "aaabz", "aaaaz", "aaaaaaaaaaaz", "aaaaaaaaaaaaz"])
-          ]
+
+  rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
+        , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
+        , ("(aa|ab)?z", ["aaz", "z", "abz"], ["az", "aaabz"])
+        , ("(aa|ab){3}z", ["aaabaaz", "aaaaaaz", "abababz"], ["aaz", "aaabz", "aaaaaaaaz"])
+        , ("(aa|ab){3,5}z", ["aaabaaz", "aaaaaaz", "abababz", "aaaaaaaaz", "aaabaaaaz", "aaabaaabaaz"], ["aaz", "aaabz", "aaaaz", "aaaaaaaaaaaz", "aaaaaaaaaaaaz"])
+        ]
