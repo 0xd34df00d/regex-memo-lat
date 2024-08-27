@@ -31,9 +31,7 @@ alternated = do
     Just rx2 -> pure $ RAlt rx1 rx2
 
 concatenated :: Parseable s => Parsec Void s (Rx 'Parsed)
-concatenated = do
-  rxs <- some postModified
-  pure $ foldl1 RConcat rxs
+concatenated = concatMany <$> some postModified
 
 postModified :: Parseable s => Parsec Void s (Rx 'Parsed)
 postModified = do

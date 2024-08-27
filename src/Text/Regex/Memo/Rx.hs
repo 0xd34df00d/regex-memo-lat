@@ -9,8 +9,11 @@ module Text.Regex.Memo.Rx
 , RxKind(..)
 , prettyRx
 
+, concatMany
+
 , desugar
 ) where
+
 import Data.Kind
 
 data RxKind = Parsed | Desugared deriving (Eq, Ord, Show)
@@ -34,6 +37,11 @@ prettyRx = \case
   RAlt r1 r2 -> "(" <> prettyRx r1 <> "|" <> prettyRx r2 <> ")"
   RStar r -> "(" <> prettyRx r <> ")*"
   ROptional r -> "(" <> prettyRx r <> ")?"
+
+concatMany :: Foldable f => f (Rx k) -> Rx k
+concatMany xs
+  | null xs = REps
+  | otherwise = foldl1 RConcat xs
 
 desugar :: Rx 'Parsed -> Rx 'Desugared
 desugar = \case
