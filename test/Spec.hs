@@ -42,7 +42,8 @@ main = hspec $ do
         annotate ("matching `" <> BS.unpack str <> "`") $
           match nfa str `shouldBe` Failure
 
-  rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
+  rxs = [ ("a|b", ["a", "b"], ["c"])
+        , ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
         , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
         , ("(aa|ab)?z", ["aaz", "z", "abz"], ["az", "aaabz"])
         , ("(aa|ab){3}z", ["aaabaaz", "aaaaaaz", "abababz"], ["aaz", "aaabz", "aaaaaaaaz"])
