@@ -24,6 +24,7 @@ data Rx :: RxKind -> Type where
   RConcat :: Rx k -> Rx k -> Rx k
   RAlt :: Rx k -> Rx k -> Rx k
   RStar :: Rx k -> Rx k
+  RPlus :: Rx 'Parsed -> Rx 'Parsed
   ROptional :: Rx 'Parsed -> Rx 'Parsed
   RReps :: Rx 'Parsed -> Int -> Int -> Rx 'Parsed
 
@@ -37,6 +38,7 @@ prettyRx = \case
   RConcat r1 r2 -> prettyRx r1 <> prettyRx r2
   RAlt r1 r2 -> "(" <> prettyRx r1 <> "|" <> prettyRx r2 <> ")"
   RStar r -> "(" <> prettyRx r <> ")*"
+  RPlus r -> "(" <> prettyRx r <> ")+"
   ROptional r -> "(" <> prettyRx r <> ")?"
   RReps r from to -> "(" <> prettyRx r <> "){" <> show from <> "," <> show to <> "}"
 
@@ -52,6 +54,7 @@ desugar = \case
   RConcat r1 r2 -> RConcat (desugar r1) (desugar r2)
   RAlt r1 r2 -> RAlt (desugar r1) (desugar r2)
   RStar r -> RStar (desugar r)
+  RPlus r -> let r' = desugar r in RConcat r' (RStar r')
   ROptional r -> RAlt (desugar r) REps
   RReps r from to -> RConcat (concatMany $ replicate from $ desugar r)
                              (concatMany $ replicate (to - from) $ desugar $ ROptional r)

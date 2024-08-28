@@ -39,22 +39,25 @@ postModified = do
   optional modifier <&> \case
     Nothing -> rx
     Just MStar -> RStar rx
+    Just MPlus -> RPlus rx
     Just MOpt -> ROptional rx
     Just (MReps from to) -> RReps rx from to
   where
   simpleChar = RCh <$> noneOf specialChars
   escapedChar = RCh <$> (char '\\' *> oneOf specialChars)
-  specialChars = "()*|\\?"
+  specialChars = "()+*|\\?"
 
 
 data Modifier
   = MStar
+  | MPlus
   | MOpt
   | MReps Int Int
 
 modifier :: Parseable s => Parsec Void s Modifier
 modifier = char '*' $> MStar
        <|> char '?' $> MOpt
+       <|> char '+' $> MPlus
        <|> char '{' *> reps
   where
   reps :: Parseable s => Parsec Void s Modifier
