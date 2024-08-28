@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE Strict #-}
@@ -13,14 +14,13 @@ import Data.Array qualified as A
 import Data.ByteString.Internal qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
-import Data.Foldable
 import Data.Word
 
 import Text.Regex.Memo.Rx
 import Text.Regex.Memo.NFA
 
 convert :: Rx 'Parsed -> NFA 'NFAComplete Word32
-convert rxTop = computeHighIndegs $ evalState (go $ desugar rxTop) 0
+convert rxTop = finalize $ evalState (go $ desugar rxTop) 0
   where
   go :: Rx 'Desugared -> State Word32 (NFA 'NFABuilding Word32)
   go rx = do
@@ -49,13 +49,23 @@ convert rxTop = computeHighIndegs $ evalState (go $ desugar rxTop) 0
     q <- get
     when (q == q1 + 1 && q == q0 + 2) $ modify' (subtract 2)
 
-  computeHighIndegs :: StateId q => NFA 'NFABuilding q -> NFA 'NFAComplete q
-  computeHighIndegs nfa = nfa{ highIndegs, transitions = transitions' }
+  finalize :: StateId q => NFA 'NFABuilding q -> NFA 'NFAComplete q
+  finalize nfa = nfa{ highIndegs, transitions = transitions', finState = finState' }
     where
-    transitions' = A.listArray (0, fromIntegral (length $ transitions nfa) - 1) $ fmap snd $ EM.toAscList $ transitions nfa
+    finState' = fromIntegral $ length $ transitions nfa
+    transitions' = A.listArray (0, finState' - 1) $ compressTransitions (finState nfa) $ transitions nfa
     highIndegs =
       ES.fromList $ EM.keys $ EM.filter (>= 2) $ EM.fromListWith (+)
         [ (q, 1 :: Int)
-        | ts <- toList $ transitions nfa
+        | ts <- A.elems transitions'
         , q <- transTargets ts
         ]
+
+compressTransitions :: StateId q => q -> EM.EnumMap q (Trans q) -> [Trans q]
+compressTransitions final trans = [ mapTransIds t | t <- EM.elems trans ]
+  where
+  transMap = EM.fromList $ (final, fromIntegral $ length trans) : zip (EM.keys trans) [0..]
+  mapTransIds = \case
+    TEps q -> TEps $ transMap EM.! q
+    TBranch q1 q2 -> TBranch (transMap EM.! q1) (transMap EM.! q2)
+    TCh c q -> TCh c (transMap EM.! q)
