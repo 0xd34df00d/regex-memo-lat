@@ -27,10 +27,8 @@ topLevel = alternated
 alternated :: Parseable s => Parsec Void s (Rx 'Parsed)
 alternated = do
   rx1 <- concatenated
-  mrx2 <- optional $ char '|' *> concatenated
-  case mrx2 of
-    Nothing -> pure rx1
-    Just rx2 -> pure $ RAlt rx1 rx2
+  rx2s <- many $ char '|' *> concatenated
+  pure $ foldl1 RAlt (rx1 : rx2s)
 
 concatenated :: Parseable s => Parsec Void s (Rx 'Parsed)
 concatenated = concatMany <$> some postModified
