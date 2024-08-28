@@ -43,6 +43,7 @@ main = hspec $ do
           match nfa str `shouldBe` Failure
 
   rxs = [ ("a|b", ["a", "b"], ["c"])
+        , ("a|b|c|d|e", ["a", "b", "e"], ["g"])
         , ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
         , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
         , ("(aa|ab)?z", ["aaz", "z", "abz"], ["az", "aaabz"])
