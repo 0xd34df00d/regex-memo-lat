@@ -8,8 +8,7 @@ module Text.Regex.Memo.Matcher.Memoizing(match) where
 
 import Control.Monad
 import Control.Monad.State.Strict
-import Data.ByteString.Char8 qualified as BS
-import Data.ByteString.Unsafe qualified as BS
+import Data.ByteString qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Maybe
@@ -22,11 +21,8 @@ newtype MemoTable q = MemoTable (EM.EnumMap Int (ES.EnumSet q))
 match :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.length bs))
   where
-  len = BS.length bs
-
   go q i
     | q == finState = pure $ SuccessAt i
-    | i >= len = pure Failure
   go q i = do
     memo <- get
     if (q, i) `member` memo
@@ -40,7 +36,7 @@ match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.le
                       SuccessAt j -> pure $ SuccessAt j
                       Failure -> go q2 i
                   TCh ch q'
-                   | bs `BS.unsafeIndex` i == ch -> go q' (i + 1)
+                   | bs `BS.indexMaybe` i == Just ch -> go q' (i + 1)
                    | otherwise -> pure Failure
          when (res == Failure && q `ES.member` highIndegs) $ modify' $ insert (q, i)
          pure res
