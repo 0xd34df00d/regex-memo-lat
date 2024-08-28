@@ -6,6 +6,7 @@ import Control.Monad
 import Data.ByteString.Char8 qualified as BS
 import Data.Either
 import Test.Hspec
+import Test.Hspec.Expectations.Contrib
 import Test.QuickCheck hiding (Failure)
 
 import Text.Regex.Memo hiding (match)
@@ -31,12 +32,15 @@ main = hspec $ do
       Right nfa <- pure $ convert <$> parseRx rx
       let extra = "we don't care about the rest"
       forM_ positive $ \str ->  do
-        match nfa str            `shouldBe` SuccessAt (BS.length str)
-        match nfa (str <> extra) `shouldBe` SuccessAt (BS.length str)
+        annotate ("matching `" <> BS.unpack str <> "`") $
+          match nfa str            `shouldBe` SuccessAt (BS.length str)
+        annotate ("matching `" <> BS.unpack str <> "` with tail") $
+          match nfa (str <> extra) `shouldBe` SuccessAt (BS.length str)
     it (rx <> " doesn't match what it shouldn't") $ do
       Right nfa <- pure $ convert <$> parseRx rx
       forM_ negative $ \str ->
-        match nfa str `shouldBe` Failure
+        annotate ("matching `" <> BS.unpack str <> "`") $
+          match nfa str `shouldBe` Failure
 
   rxs = [ ("a(b|c)d(e|f)*z", ["abdz", "acdz", "abdeffefefez"], ["abdeffefefe"])
         , ("(aa|ab)*z", ["aaz", "aaabz", "abaaz"], ["aaaz"])
