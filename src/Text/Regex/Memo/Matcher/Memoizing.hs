@@ -36,8 +36,8 @@ match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.le
                       SuccessAt j -> pure $ SuccessAt j
                       Failure -> go q2 i
                   TCh ch q'
-                   | bs `BS.indexMaybe` i == Just ch -> go q' (i + 1)
-                   | otherwise -> pure Failure
+                    | bs `BS.indexMaybe` i == Just ch -> go q' (i + 1)
+                    | otherwise -> pure Failure
          when (res == Failure && q `ES.member` highIndegs) $ modify' $ insert (q, i)
          pure res
 
