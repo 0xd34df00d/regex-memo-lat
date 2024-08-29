@@ -17,7 +17,6 @@ import Text.Regex.Memo.NFA
 match :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = go initState 0
   where
-  len = BS.length bs
   go q i
     | q == finState = SuccessAt i
   go q i = case q `getTrans` transitions of
