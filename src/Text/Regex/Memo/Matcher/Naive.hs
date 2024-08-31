@@ -4,8 +4,7 @@
 {-# LANGUAGE Strict #-}
 
 module Text.Regex.Memo.Matcher.Naive
-( MatchResult(..)
-, match
+( match
 ) where
 
 import Control.Applicative
