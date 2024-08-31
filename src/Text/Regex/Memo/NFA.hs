@@ -23,8 +23,10 @@ module Text.Regex.Memo.NFA
 , StateId
 , TransMap
 , getTrans
+
 , toWord64
 , fromWord64
+, maxState
 
 , prettyNFABuilding
 , prettyNFAComplete
@@ -89,6 +91,9 @@ type family IndegsType (s :: NFAStage) (q :: Type) :: Type where
 type family TransType (s :: NFAStage) (q :: Type) :: Type where
   TransType 'NFABuilding q = TransMap q
   TransType 'NFAComplete q = VU.Vector (Trans q)
+
+maxState :: Integral q => q
+maxState = 2 ^ 8
 
 toWord64 :: Integral q => Trans q -> Word64
 toWord64 = \case

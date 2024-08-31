@@ -1,10 +1,12 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad
 import Data.ByteString.Char8 qualified as BS
 import Data.Either
+import Data.Word
 import Test.Hspec
 import Test.Hspec.Expectations.Contrib
 import Test.QuickCheck hiding (Failure)
@@ -12,6 +14,14 @@ import Test.QuickCheck hiding (Failure)
 import Text.Regex.Memo hiding (match)
 import Text.Regex.Memo.Matcher.Naive qualified as N
 import Text.Regex.Memo.Matcher.Memoizing qualified as M
+
+instance (Bounded q, Integral q) => Arbitrary (Trans q) where
+  arbitrary = oneof [ TEps <$> genQ
+                    , TBranch <$> genQ <*> genQ
+                    , TCh <$> arbitrary <*> genQ
+                    ]
+    where
+    genQ = chooseBoundedIntegral (0, maxState)
 
 main :: IO ()
 main = hspec $ do
