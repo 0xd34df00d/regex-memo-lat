@@ -1,7 +1,9 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 import Control.Monad
 import Data.ByteString.Char8 qualified as BS
@@ -9,6 +11,7 @@ import Data.Either
 import Data.Word
 import Test.Hspec
 import Test.Hspec.Expectations.Contrib
+import Test.Hspec.QuickCheck (modifyMaxSuccess)
 import Test.QuickCheck hiding (Failure)
 
 import Text.Regex.Memo hiding (match)
@@ -25,6 +28,10 @@ instance (Bounded q, Integral q) => Arbitrary (Trans q) where
 
 main :: IO ()
 main = hspec $ do
+  describe "Misc helpers" $
+    modifyMaxSuccess (const 10_000) $
+      it "fromWord64 . toWord64 = id" $
+        property $ \(t :: Trans Word32) -> fromWord64 (toWord64 t) == t
   describe "Rx parser" $
     forM_ rxs $ \(rx, _, _) ->
       it ("parses a regex: "<> rx) $ do
