@@ -10,10 +10,11 @@ module Text.Regex.Memo.Convert(convert) where
 
 import Control.Monad
 import Control.Monad.State.Strict
-import Data.Array qualified as A
+import Data.Array.Unboxed qualified as A
 import Data.ByteString.Internal qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
+import Data.Vector.Unboxed qualified as VU
 import Data.Word
 
 import Text.Regex.Memo.Rx
@@ -53,11 +54,11 @@ convert rxTop = finalize $ evalState (go $ desugar rxTop) 0
   finalize nfa = nfa{ highIndegs, transitions = transitions', finState = finState' }
     where
     finState' = fromIntegral $ length $ transitions nfa
-    transitions' = A.listArray (0, finState' - 1) $ compressTransitions (finState nfa) $ transitions nfa
+    transitions' = VU.fromList $ compressTransitions (finState nfa) $ transitions nfa
     highIndegs =
       ES.fromList $ EM.keys $ EM.filter (>= 2) $ EM.fromListWith (+)
         [ (q, 1 :: Int)
-        | ts <- A.elems transitions'
+        | ts <- VU.toList transitions'
         , q <- transTargets ts
         ]
 

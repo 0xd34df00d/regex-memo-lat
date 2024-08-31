@@ -12,6 +12,7 @@ import Data.ByteString qualified as BS
 import Data.EnumMap.Strict qualified as EM
 import Data.EnumSet qualified as ES
 import Data.Maybe
+import Data.Vector.Unboxed qualified as VU
 
 import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.NFA
@@ -19,7 +20,7 @@ import Text.Regex.Memo.NFA
 newtype MemoTable q = MemoTable (EM.EnumMap Int (ES.EnumSet q))
 
 match :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
-match NFA{..} bs = evalState (go initState 0) (empty (length transitions) (BS.length bs))
+match NFA{..} bs = evalState (go initState 0) (empty (VU.length transitions) (BS.length bs))
   where
   go q i
     | q == finState = pure $ SuccessAt i

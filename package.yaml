@@ -31,6 +31,8 @@ dependencies:
 - mtl
 - parser-combinators
 - unordered-containers
+- vector
+
 
 ghc-options:
 - -Wall
