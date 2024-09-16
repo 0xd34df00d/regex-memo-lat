@@ -33,6 +33,10 @@ dependencies:
 - unordered-containers
 - vector
 
+default-extensions:
+- ImportQualifiedPost
+- Strict
+
 
 ghc-options:
 - -Wall

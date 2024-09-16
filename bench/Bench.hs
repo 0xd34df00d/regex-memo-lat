@@ -1,4 +1,4 @@
-{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NoStrict #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 

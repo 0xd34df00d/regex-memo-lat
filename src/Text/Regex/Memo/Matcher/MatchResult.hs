@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Strict #-}
 
 module Text.Regex.Memo.Matcher.MatchResult(MatchResult(..)) where
 

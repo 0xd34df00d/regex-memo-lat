@@ -1,8 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE Strict #-}
 
 module Text.Regex.Memo.Matcher.Memoizing(match) where
 
