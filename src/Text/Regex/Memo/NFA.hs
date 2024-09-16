@@ -121,11 +121,6 @@ data NFA stage q = NFA
   , highIndegs :: IndegsType stage q
   }
 
-instance Enum k => IsList (EM.EnumMap k v) where
-  type Item (EM.EnumMap k v) = (k, v)
-  fromList = EM.fromList
-  toList = EM.toList
-
 prettyNFABuilding :: (StateId q, Show q) => NFA 'NFABuilding q -> String
 prettyNFABuilding NFA{..} = unlines $ ("initial: " <> show initState <> "; final: " <> show finState) :
   [ show q <> " ~> " <> prettyTrans trans
