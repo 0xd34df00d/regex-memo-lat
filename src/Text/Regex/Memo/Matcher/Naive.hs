@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Strict #-}
 
@@ -17,21 +16,45 @@ import Data.Vector.Unboxed.Mutable qualified as VM
 import Text.Regex.Memo.Matcher.MatchResult
 import Text.Regex.Memo.NFA
 
+data Stack s a = Stack
+  { theVec :: VM.MVector s a
+  , size :: Int
+  }
+
+mkStack :: VM.Unbox a => Int -> ST s (Stack s a)
+mkStack initSize = (`Stack` 0) <$> VM.unsafeNew initSize
+
+isEmpty :: Stack s a -> Bool
+isEmpty = (== 0) . size
+
+push :: VM.Unbox a => a -> Stack s a -> ST s (Stack s a)
+push a Stack{..} = do
+  vec' <- if size /= VM.length theVec
+             then pure theVec
+             else theVec `VM.unsafeGrow` size
+  VM.unsafeWrite vec' size a
+  pure $ Stack vec' (size + 1)
+
+pop :: VM.Unbox a => Stack s a -> ST s (a, Stack s a)
+pop Stack{..} = do
+  a <- VM.unsafeRead theVec (size - 1)
+  pure (a, Stack theVec (size - 1))
+
 match :: (VM.Unbox q, StateId q) => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 match NFA{..} bs = runST $ do
-  stack <- VM.unsafeNew 24_000_000
+  stack <- mkStack $ BS.length bs * 2
   let go s q i
         | q == finState = pure $ SuccessAt i
         | otherwise = case q `getTrans` transitions of
               TEps q' -> go s q' i
-              TBranch q1 q2 -> do VM.unsafeWrite stack s (q2, i)
-                                  go (s + 1) q1 i
+              TBranch q1 q2 -> do stack' <- (q2, i) `push` s
+                                  go stack' q1 i
               TCh ch q'
                 | bs `BS.indexMaybe` i == Just ch -> go s q' (i + 1)
-                | s == 0 -> pure Failure
-                | otherwise -> do (q'', i'') <- VM.unsafeRead stack (s - 1)
-                                  go (s - 1) q'' i''
-  go 0 initState 0
+                | isEmpty s -> pure Failure
+                | otherwise -> do ((q'', i''), stack') <- pop s
+                                  go stack' q'' i''
+  go stack initState 0
 
 matchSimplest :: StateId q => NFA 'NFAComplete q -> BS.ByteString -> MatchResult Int
 matchSimplest NFA{..} bs = go initState 0
