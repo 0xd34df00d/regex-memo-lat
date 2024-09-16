@@ -46,6 +46,7 @@ ghc-options:
 - -Wredundant-constraints
 - -fexpose-all-unfoldings
 - -fspecialize-aggressively
+- -O2
 
 library:
   source-dirs: src
