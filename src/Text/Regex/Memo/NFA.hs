@@ -92,20 +92,23 @@ type family TransType (s :: NFAStage) (q :: Type) :: Type where
   TransType 'NFABuilding q = TransMap q
   TransType 'NFAComplete q = VU.Vector (Trans q)
 
+tagShift :: Int
+tagShift = 48
+
 maxState :: Integral q => q
-maxState = 2 ^ 8
+maxState = 2 ^ (tagShift - 32)
 
 toWord64 :: Integral q => Trans q -> Word64
 toWord64 = \case
-  TEps q -> (fromIntegral q .<<. 2) .|. 0b00
-  TBranch q1 q2 -> (fromIntegral q1 .<<. 18) .|. (fromIntegral q2 .<<. 2) .|. 0b01
-  TCh w q -> (fromIntegral w .<<. 18) .|. (fromIntegral q .<<. 2) .|. 0b10
+  TEps q        -> (0b01 .<<. tagShift) .|. fromIntegral q
+  TBranch q1 q2 -> (0b00 .<<. tagShift) .|. fromIntegral q1 .|. (fromIntegral q2 .<<. 32)
+  TCh w q       -> (0b11 .<<. tagShift) .|. fromIntegral w  .|. (fromIntegral q .<<. 8)
 
 fromWord64 :: Integral q => Word64 -> Trans q
-fromWord64 w = case w .&. 0b11 of
-  0b00 -> TEps $ fromIntegral $ w .>>. 2
-  0b01 -> TBranch (fromIntegral $ (w .>>. 18) .&. 0xffff) (fromIntegral $ (w .>>. 2) .&. 0xffff)
-  _    -> TCh (fromIntegral $ w .>>. 18) (fromIntegral $ (w .>>. 2) .&. 0xffff)
+fromWord64 w = case w .>>. tagShift of
+  0b01 -> TEps $ fromIntegral w
+  0b00 -> TBranch (fromIntegral w) (fromIntegral $ w .>>. 32)
+  _    -> TCh (fromIntegral w) (fromIntegral $ w .>>. 8)
 
 getTrans :: StateId q => q -> TransType 'NFAComplete q -> Trans q
 getTrans q m = m `VU.unsafeIndex` fromIntegral q
